@@ -5,12 +5,6 @@ You are welcome to submit a pull request though.
 
 This downgrade is up to Dec 21, 2021, commit: https://github.com/otland/forgottenserver/commit/17bf638815fa7c04d5b723baa8e0bfbdaad341f2
 
-## Other distributions:
-
-#### **[7.72](https://github.com/nekiro/TFS-1.4-Downgrades/tree/7.72)**
-
-#### **[8.0](https://github.com/nekiro/TFS-1.4-Downgrades/tree/8.0)**
-
 ## How to compile
 
 [Wiki](https://github.com/otland/forgottenserver/wiki/Compiling)
