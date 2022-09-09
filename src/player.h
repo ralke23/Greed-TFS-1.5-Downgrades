@@ -1019,6 +1019,13 @@ class Player final : public Creature, public Cylinder
 		bool hasLearnedInstantSpell(const std::string& spellName) const;
 
 		void updateRegeneration();
+		bool inPvPArenaPlayer() {
+			return isPvPArenaPlayer;
+		}
+
+		void setPvPArenaPlayer(bool value) {
+			isPvPArenaPlayer = value;
+		}
 
 	private:
 		std::forward_list<Condition*> getMuteConditions() const;
@@ -1175,6 +1182,7 @@ class Player final : public Creature, public Cylinder
 		bool isConnecting = false;
 		bool addAttackSkillPoint = false;
 		bool inventoryAbilities[CONST_SLOT_LAST + 1] = {};
+		bool isPvPArenaPlayer = false;
 
 		static uint32_t playerAutoID;
 

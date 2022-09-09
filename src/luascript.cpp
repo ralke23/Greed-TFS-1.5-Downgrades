@@ -2388,6 +2388,8 @@ void LuaScriptInterface::registerFunctions()
 
 	registerMethod("Player", "getStorageValue", LuaScriptInterface::luaPlayerGetStorageValue);
 	registerMethod("Player", "setStorageValue", LuaScriptInterface::luaPlayerSetStorageValue);
+	registerMethod("Player", "isPvPArenaPlayer", LuaScriptInterface::luaPlayerIsPvPArenaPlayer);
+	registerMethod("Player", "setPvPArenaPlayer", LuaScriptInterface::luaPlayerSetPvPArenaPlayer);
 
 	registerMethod("Player", "addItem", LuaScriptInterface::luaPlayerAddItem);
 	registerMethod("Player", "addItemEx", LuaScriptInterface::luaPlayerAddItemEx);
@@ -8832,6 +8834,36 @@ int LuaScriptInterface::luaPlayerSetStorageValue(lua_State* L)
 	} else {
 		lua_pushnil(L);
 	}
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerIsPvPArenaPlayer(lua_State* L)
+{
+	// player:isPvPArenaPlayer()
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	bool value = player->inPvPArenaPlayer();
+	lua_pushboolean(L, value);
+	return 1;
+}
+
+int LuaScriptInterface::luaPlayerSetPvPArenaPlayer(lua_State* L)
+{
+	// player:setPvPArenaPlayer(bool)
+	Player* player = getUserdata<Player>(L, 1);
+	if (!player) {
+		lua_pushboolean(L, false);
+		return 1;
+	}
+
+	bool value = getBoolean(L, 2, false);
+
+	player->setPvPArenaPlayer(value);
+	lua_pushboolean(L, true);
 	return 1;
 }
 
