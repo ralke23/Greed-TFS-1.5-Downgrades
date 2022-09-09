@@ -998,6 +998,7 @@ class LuaScriptInterface
 		static int luaMonsterGetType(lua_State* L);
 
 		static int luaMonsterRename(lua_State* L);
+		static int luaMonsterSetMasterPosition(lua_State* L);
 
 		static int luaMonsterGetSpawnPosition(lua_State* L);
 		static int luaMonsterIsInSpawnRange(lua_State* L);

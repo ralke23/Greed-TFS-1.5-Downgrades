@@ -2467,6 +2467,7 @@ void LuaScriptInterface::registerFunctions()
 	registerMethod("Monster", "getType", LuaScriptInterface::luaMonsterGetType);
 
 	registerMethod("Monster", "rename", LuaScriptInterface::luaMonsterRename);
+	registerMethod("Monster", "setMasterPosition", LuaScriptInterface::luaMonsterSetMasterPosition);
 
 	registerMethod("Monster", "getSpawnPosition", LuaScriptInterface::luaMonsterGetSpawnPosition);
 	registerMethod("Monster", "isInSpawnRange", LuaScriptInterface::luaMonsterIsInSpawnRange);
@@ -9909,6 +9910,36 @@ int LuaScriptInterface::luaMonsterRename(lua_State* L)
 		monster->setNameDescription(getString(L, 3));
 	}
 
+	pushBoolean(L, true);
+	return 1;
+}
+
+int LuaScriptInterface::luaMonsterSetMasterPosition(lua_State* L)
+{
+	// monster:setMasterPosition(pos)
+	Monster* monster = getUserdata<Monster>(L, 1);
+	if (!monster) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	Position position;
+	if (isTable(L, 2)) {
+		position = getPosition(L, 2);
+	}
+	else {
+		position.x = getNumber<uint16_t>(L, 2);
+		position.y = getNumber<uint16_t>(L, 3);
+		position.z = getNumber<uint16_t>(L, 4);
+	}
+
+	Tile* tile = g_game.map.getTile(position);
+	if (!tile) {
+		lua_pushnil(L);
+		return 1;
+	}
+
+	monster->setMasterPos(position);
 	pushBoolean(L, true);
 	return 1;
 }
