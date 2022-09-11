@@ -149,6 +149,10 @@ void Creature::onThink(uint32_t interval)
 		blockTicks = 0;
 	}
 
+	if (followCreature) {
+		goToFollowCreature();
+	}
+
 	forceUpdateFollowPath = true;
 
 	//scripting event - onThink
