@@ -2054,7 +2054,7 @@ void Game::playerUseItem(uint32_t playerId, const Position& pos, uint8_t stackPo
 	if (ret != RETURNVALUE_NOERROR) {
 		if (ret == RETURNVALUE_TOOFARAWAY) {
 			std::vector<Direction> listDir;
-			if (player->getPathTo(position, listDir, 0, 1, true, true, PLAYER_SEARCHDIST)) {
+			if (player->getPathTo(pos, listDir, 0, 1, true, true, PLAYER_SEARCHDIST)) {
 				g_dispatcher.addTask(createTask(std::bind(&Game::playerAutoWalk,
 				                                this, player->getID(), std::move(listDir))));
 
@@ -2249,7 +2249,7 @@ void Game::playerRotateItem(uint32_t playerId, const Position& pos, uint8_t stac
 
 	if (pos.x != 0xFFFF && !Position::areInRange<1, 1, 0>(pos, player->getPosition())) {
 		std::vector<Direction> listDir;
-		if (player->getPathTo(position, listDir, 0, 1, true, true, PLAYER_SEARCHDIST)) {
+		if (player->getPathTo(pos, listDir, 0, 1, true, true, PLAYER_SEARCHDIST)) {
 			g_dispatcher.addTask(createTask(std::bind(&Game::playerAutoWalk,
 			                                this, player->getID(), std::move(listDir))));
 
@@ -2519,7 +2519,7 @@ void Game::playerRequestTrade(uint32_t playerId, const Position& pos, uint8_t st
 
 	if (!Position::areInRange<1, 1>(tradeItemPosition, playerPosition)) {
 		std::vector<Direction> listDir;
-		if (player->getPathTo(position, listDir, 0, 1, true, true, PLAYER_SEARCHDIST)) {
+		if (player->getPathTo(pos, listDir, 0, 1, true, true, PLAYER_SEARCHDIST)) {
 			g_dispatcher.addTask(createTask(std::bind(&Game::playerAutoWalk,
 			                                this, player->getID(), std::move(listDir))));
 
