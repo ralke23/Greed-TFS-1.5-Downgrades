@@ -1312,7 +1312,7 @@ void ProtocolGame::sendContainer(uint8_t cid, const Container* container, bool h
 	msg.addItem(container);
 	msg.addString(container->getName());
 
-	msg.addByte(container->getName() == "Quiver" ? 4 : container->capacity());
+	msg.addByte(container->getName() == "quiver" ? 4 : container->capacity());
 
 	msg.addByte(hasParent ? 0x01 : 0x00);
 

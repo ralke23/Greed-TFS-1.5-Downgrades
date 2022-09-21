@@ -256,7 +256,7 @@ ReturnValue Container::queryAdd(int32_t index, const Thing& thing, uint32_t coun
 		return RETURNVALUE_THISISIMPOSSIBLE;
 	}
 
-	if (getName() == "Quiver" && (!(item->getSlotPosition() & SLOTP_AMMO) || item->getName() == "Quiver")) {
+	if (getName() == "quiver" && (!(item->getSlotPosition() & SLOTP_AMMO) || item->getName() == "quiver")) {
 		return RETURNVALUE_NOTENOUGHROOM;
 	}
 
@@ -305,7 +305,7 @@ ReturnValue Container::queryMaxCount(int32_t index, const Thing& thing, uint32_t
 		return RETURNVALUE_NOERROR;
 	}
 
-	if (getName().find("Quiver") != std::string::npos && !(item->getSlotPosition() & SLOTP_AMMO)) {
+	if (getName().find("quiver") != std::string::npos && !(item->getSlotPosition() & SLOTP_AMMO)) {
 		return RETURNVALUE_NOTENOUGHROOM;
 	}
 
@@ -409,7 +409,7 @@ Cylinder* Container::queryDestination(int32_t& index, const Thing& thing, Item**
 		return this;
 	}
 
-	if (getName().find("Quiver") != std::string::npos && !(item->getSlotPosition() & SLOTP_AMMO)) {
+	if (getName().find("quiver") != std::string::npos && !(item->getSlotPosition() & SLOTP_AMMO)) {
 		return this;
 	}
 

@@ -2416,7 +2416,7 @@ ReturnValue Player::queryAdd(int32_t index, const Thing& thing, uint32_t count, 
 			if ((slotPosition & SLOTP_AMMO) || g_config.getBoolean(ConfigManager::CLASSIC_EQUIPMENT_SLOTS)) {
 				ret = RETURNVALUE_NOERROR;
 			}
-			else if (slotPosition & SLOTP_BACKPACK && item->getName() == "Quiver") {
+			else if (slotPosition & SLOTP_BACKPACK && item->getName() == "quiver") {
 				ret = RETURNVALUE_NOERROR;
 			}
 			break;
