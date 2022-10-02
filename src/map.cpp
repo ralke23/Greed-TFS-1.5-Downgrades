@@ -690,7 +690,7 @@ bool Map::getPathMatching(const Creature& creature, const Position& targetPos, s
 
 	// We are at the target and don't need to walk away. No need to update path.
 	if (!fpp.keepDistance && fpp.minTargetDist <= 1 && distX < 2 && distY < 2) {
-		return false;
+		return true;
 	}
 
 	int32_t bestMatch = 0;
