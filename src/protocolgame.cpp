@@ -31,6 +31,7 @@
 #include "iologindata.h"
 #include "ban.h"
 #include "scheduler.h"
+#include "monster.h"
 
 #include <fmt/format.h>
 
@@ -2165,7 +2166,13 @@ void ProtocolGame::AddCreature(NetworkMessage& msg, const Creature* creature, bo
 		msg.add<uint16_t>(0x61);
 		msg.add<uint32_t>(remove);
 		msg.add<uint32_t>(creature->getID());
-		msg.addString(creature->getName());
+		const Monster* monster = creature->getMonster();
+		if (monster && monster->getLevel() > 0) {
+			msg.addString(creature->getName() + " [" + std::to_string(monster->getLevel()) + "]");
+		}
+		else {
+			msg.addString(creature->getName());
+		}
 	}
 
 	if (creature->isHealthHidden()) {
