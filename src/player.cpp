@@ -3772,7 +3772,7 @@ Skulls_t Player::getSkullClient(const Creature* creature) const
 	}
 
 	const Player* player = creature->getPlayer();
-	if (!player || player->getSkull() != SKULL_NONE) {
+	if (!player || creature->getSkull() != SKULL_NONE) {
 		return Creature::getSkullClient(creature);
 	}
 

@@ -53,6 +53,24 @@ Monster::Monster(MonsterType* mType) :
 	currentOutfit = mType->info.outfit;
 	skull = mType->info.skull;
 	level = uniform_random(mType->info.minLevel, mType->info.maxLevel);
+
+	// Elite Monsters skull by LEVEL:
+	if (level >= 1 && level <= 20) {
+		skull = SKULL_GREEN;
+	}
+	else if (level >= 21 && level <= 45) {
+		skull = SKULL_YELLOW;
+	}
+	else if (level >= 45 && level <= 65) {
+		skull = SKULL_WHITE;
+	}
+	else if (level >= 65 && level <= 85) {
+		skull = SKULL_RED;
+	}
+	else if (level >= 86) {
+		skull = SKULL_BLACK;
+	}
+
 	health = mType->info.health;
 	healthMax = mType->info.healthMax;
 	baseSpeed = mType->info.baseSpeed;
