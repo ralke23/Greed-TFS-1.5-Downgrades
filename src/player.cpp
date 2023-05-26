@@ -1571,6 +1571,7 @@ void Player::addManaSpent(uint64_t amount)
 
 	if (sendUpdateStats) {
 		sendStats();
+		sendSkills();
 	}
 }
 
@@ -1607,6 +1608,7 @@ void Player::removeManaSpent(uint64_t amount, bool notify/* = false*/)
 
 		if (sendUpdateStats || oldPercent != magLevelPercent) {
 			sendStats();
+			sendSkills();
 		}
 	}
 }
@@ -3784,7 +3786,7 @@ Skulls_t Player::getSkullClient(const Creature* creature) const
 		return SKULL_YELLOW;
 	}
 
-	if (isPartner(player)) {
+	if (party && party == player->party) {
 		return SKULL_GREEN;
 	}
 	return Creature::getSkullClient(creature);
@@ -3994,7 +3996,8 @@ PartyShields_t Player::getPartyShield(const Player* player) const
 			return SHIELD_BLUE;
 		}
 
-		if (isInviting(player)) {
+		// isInviting(player) if members aren't supposed to see the invited player emblem
+		if (party->isPlayerInvited(player)) {
 			return SHIELD_WHITEBLUE;
 		}
 	}

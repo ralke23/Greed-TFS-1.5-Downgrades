@@ -21,7 +21,7 @@
 
 #include "depotlocker.h"
 
-DepotLocker::DepotLocker(uint16_t type) : Container(type, 30) {}
+DepotLocker::DepotLocker(uint16_t type) : Container(type, 30) {} // Container(type), depotId(0) {} // change on downgrade
 
 Attr_ReadValue DepotLocker::readAttr(AttrTypes_t attr, PropStream& propStream)
 {

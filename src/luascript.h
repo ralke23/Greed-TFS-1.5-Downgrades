@@ -40,6 +40,7 @@
 #include "enums.h"
 #include "position.h"
 #include "outfit.h"
+#include <fmt/format.h>
 
 class Thing;
 class Creature;
@@ -293,11 +294,28 @@ class LuaScriptInterface
 			return static_cast<T>(static_cast<int64_t>(lua_tonumber(L, arg)));
 		}
 		template<typename T>
-		static typename std::enable_if<std::is_integral<T>::value || std::is_floating_point<T>::value, T>::type
+		static typename std::enable_if<std::is_integral<T>::value&& std::is_unsigned<T>::value, T>::type
 			getNumber(lua_State* L, int32_t arg)
 		{
-			return static_cast<T>(lua_tonumber(L, arg));
+			double num = lua_tonumber(L, arg);
+			if (num < static_cast<double>(std::numeric_limits<T>::lowest()) || num > static_cast<double>(std::numeric_limits<T>::max())) {
+				reportErrorFunc(L, fmt::format("Argument {} has out-of-range value for {}: {}", arg, typeid(T).name(), num));
+			}
+
+			return static_cast<T>(num);
 		}
+		template<typename T>
+		static typename std::enable_if<(std::is_integral<T>::value && (std::is_signed<T>::value) || std::is_floating_point<T>::value), T>::type
+			getNumber(lua_State* L, int32_t arg)
+		{
+			double num = lua_tonumber(L, arg);
+			if (num < static_cast<double>(std::numeric_limits<T>::lowest()) || num > static_cast<double>(std::numeric_limits<T>::max())) {
+				reportErrorFunc(L, fmt::format("Argument {} has out-of-range value for {}: {}", arg, typeid(T).name(), num));
+			}
+
+			return static_cast<T>(num);
+		}
+
 		template<typename T>
 		static T getNumber(lua_State *L, int32_t arg, T defaultValue)
 		{
@@ -989,6 +1007,10 @@ class LuaScriptInterface
 		static int luaPlayerHasChaseMode(lua_State* L);
 		static int luaPlayerHasSecureMode(lua_State* L);
 		static int luaPlayerGetFightMode(lua_State* L);
+
+		static int luaPlayerIsNearDepotBox(lua_State* L);
+
+		static int luaPlayerGetIdleTime(lua_State* L);
 
 		// Monster
 		static int luaMonsterCreate(lua_State* L);
