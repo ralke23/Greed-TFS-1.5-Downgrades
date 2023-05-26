@@ -106,6 +106,10 @@ enum AttrTypes_t {
 	//ATTR_WRAPID = 36,
 	//ATTR_STOREITEM = 37,
 	ATTR_ATTACK_SPEED = 38,
+	// ATTR_PODIUMOUTFIT = 40, // mapeditor
+	// ATTR_TIER = 41, // mapeditor
+	ATTR_REFLECT = 42,
+	ATTR_BOOST = 43,
 };
 
 enum Attr_ReadValue {
@@ -221,6 +225,14 @@ class ItemAttributes
 			VariantAttribute value;
 
 			CustomAttribute() : value(boost::blank()) {}
+
+			bool operator==(const CustomAttribute& otherAttr) const {
+				return value == otherAttr.value;
+			}
+
+			bool operator!=(const CustomAttribute& otherAttr) const {
+				return value != otherAttr.value;
+			}
 
 			template<typename T>
 			explicit CustomAttribute(const T& v) : value(v) {}
