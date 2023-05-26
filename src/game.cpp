@@ -583,6 +583,11 @@ bool Game::removeCreature(Creature* creature, bool isLogout/* = true*/)
 		spectator->onRemoveCreature(creature, isLogout);
 	}
 
+	Creature* master = creature->getMaster();
+	if (master && !master->isRemoved()) {
+		creature->setMaster(nullptr);
+	}
+
 	creature->getParent()->postRemoveNotification(creature, nullptr, 0);
 
 	creature->removeList();
@@ -721,6 +726,11 @@ void Game::playerMoveCreature(Player* player, Creature* movingCreature, const Po
 	const Position& toPos = toTile->getPosition();
 	if ((Position::getDistanceX(movingCreaturePos, toPos) > movingCreature->getThrowRange()) || (Position::getDistanceY(movingCreaturePos, toPos) > movingCreature->getThrowRange()) || (Position::getDistanceZ(movingCreaturePos, toPos) * 4 > movingCreature->getThrowRange())) {
 		player->sendCancelMessage(RETURNVALUE_DESTINATIONOUTOFREACH);
+		return;
+	}
+
+	if (!Position::areInRange<1, 1, 0>(movingCreaturePos, player->getPosition())) {
+		player->sendCancelMessage(RETURNVALUE_NOTPOSSIBLE);
 		return;
 	}
 

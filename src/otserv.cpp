@@ -34,7 +34,7 @@
 #include "databasetasks.h"
 #include "script.h"
 #include <fstream>
-#include <fmt/format.h>
+#include <fmt/color.h>
 #if __has_include("gitmetadata.h")
 	#include "gitmetadata.h"
 #endif
@@ -56,7 +56,7 @@ std::unique_lock<std::mutex> g_loaderUniqueLock(g_loaderLock);
 
 void startupErrorMessage(const std::string& errorStr)
 {
-	std::cout << "> ERROR: " << errorStr << std::endl;
+	fmt::print(fg(fmt::color::crimson) | fmt::emphasis::bold, "> ERROR: {:s}\n", errorStr);
 	g_loaderSignal.notify_all();
 }
 
@@ -74,7 +74,7 @@ bool argumentsHandler(const StringVector& args);
 int main(int argc, char* argv[])
 {
 	StringVector args = StringVector(argv, argv + argc);
-	if(argc > 1 && !argumentsHandler(args)) {
+	if (argc > 1 && !argumentsHandler(args)) {
 		return 0;
 	}
 
@@ -110,7 +110,7 @@ void printServerVersion()
 {
 #if defined(GIT_RETRIEVED_STATE) && GIT_RETRIEVED_STATE
 	std::cout << STATUS_SERVER_NAME << " - Version " << GIT_DESCRIBE << std::endl;
-	std::cout << "Git SHA1 " << GIT_SHORT_SHA1  << " dated " << GIT_COMMIT_DATE_ISO8601 << std::endl;
+	std::cout << "Git SHA1 " << GIT_SHORT_SHA1 << " dated " << GIT_COMMIT_DATE_ISO8601 << std::endl;
 	#if GIT_IS_DIRTY
 	std::cout << "*** DIRTY - NOT OFFICIAL RELEASE ***" << std::endl;
 	#endif
@@ -133,13 +133,13 @@ void printServerVersion()
 #if defined(LUAJIT_VERSION)
 	std::cout << "Linked with " << LUAJIT_VERSION << " for Lua support" << std::endl;
 #else
-	std::cout << "Linked with " << LUA_RELEASE << " for Lua support"  << std::endl;
+	std::cout << "Linked with " << LUA_RELEASE << " for Lua support" << std::endl;
 #endif
 	std::cout << std::endl;
 
 	std::cout << "A server developed by " << STATUS_SERVER_DEVELOPERS << std::endl;
 	std::cout << "Downgraded and further developed by Nekiro" << std::endl;
-	std::cout << "Visit our forum for updates, support, and resources: http://otland.net/." << std::endl;
+	std::cout << "Visit our forum for updates, support, and resources: https://otland.net/." << std::endl;
 	std::cout << std::endl;
 }
 
@@ -188,6 +188,7 @@ void mainLoader(int, char*[], ServiceManager* services)
 #endif
 
 	//set RSA key
+	std::cout << ">> Loading RSA key " << std::endl;
 	try {
 		g_RSA.loadPEM("key.pem");
 	} catch(const std::exception& e) {

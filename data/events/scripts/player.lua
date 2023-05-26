@@ -163,6 +163,12 @@ function Player:onGainSkillTries(skill, tries)
 	if APPLY_SKILL_MULTIPLIER == false then
 		return hasEventCallback(EVENT_CALLBACK_ONGAINSKILLTRIES) and EventCallback(EVENT_CALLBACK_ONGAINSKILLTRIES, self, skill, tries) or tries
 	end
+	
+	unction Player:onInventoryUpdate(item, slot, equip)
+	if hasEventCallback(EVENT_CALLBACK_ONINVENTORYUPDATE) then
+		EventCallback(EVENT_CALLBACK_ONINVENTORYUPDATE, self, item, slot, equip)
+	end
+end
 
 	if skill == SKILL_MAGLEVEL then
 		tries = tries * configManager.getNumber(configKeys.RATE_MAGIC)
