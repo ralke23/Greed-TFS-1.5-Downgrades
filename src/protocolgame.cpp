@@ -560,22 +560,23 @@ void ProtocolGame::parsePacket(NetworkMessage& msg)
 
 void ProtocolGame::GetTileDescription(const Tile* tile, NetworkMessage& msg)
 {
-	int32_t count;
-	Item* ground = tile->getGround();
-	if (ground) {
+	int32_t count = 0;
+	if (const auto ground = tile->getGround()) {
 		msg.addItem(ground);
-		count = 1;
-	} else {
-		count = 0;
+		++count;
 	}
 
+	const bool isStacked = player->getPosition() == tile->getPosition();
 	const TileItemVector* items = tile->getItemList();
 	if (items) {
 		for (auto it = items->getBeginTopItem(), end = items->getEndTopItem(); it != end; ++it) {
 			msg.addItem(*it);
 
-			if (++count == 10) {
+			if (++count == 9 && isStacked) {
 				break;
+			}
+			else if (count == MAX_STACKPOS_THINGS) {
+				return;
 			}
 		}
 	}
@@ -583,24 +584,31 @@ void ProtocolGame::GetTileDescription(const Tile* tile, NetworkMessage& msg)
 	const CreatureVector* creatures = tile->getCreatures();
 	if (creatures) {
 		for (auto it = creatures->rbegin(), end = creatures->rend(); it != end; ++it) {
-			const Creature* creature = (*it);
-			if (!player->canSeeCreature(creature)) {
-				continue;
+			if (count == 9 && isStacked) {
+				auto [known, removedKnown] = isKnownCreature(player->getID());
+				AddCreature(msg, player, known, removedKnown);
+			}
+			else {
+				const Creature* creature = (*it);
+				if (!player->canSeeCreature(creature)) {
+					continue;
+				}
+
+				auto [known, removedKnown] = isKnownCreature(creature->getID());
+				AddCreature(msg, creature, known, removedKnown);
 			}
 
-			bool known;
-			uint32_t removedKnown;
-			checkCreatureAsKnown(creature->getID(), known, removedKnown);
-			AddCreature(msg, creature, known, removedKnown);
-			++count;
+			if (++count == MAX_STACKPOS_THINGS) {
+				return;
+			}
 		}
 	}
 
-	if (items && count < 10) {
+	if (items) {
 		for (auto it = items->getBeginDownItem(), end = items->getEndDownItem(); it != end; ++it) {
 			msg.addItem(*it);
 
-			if (++count == 10) {
+			if (++count == MAX_STACKPOS_THINGS) {
 				return;
 			}
 		}
@@ -645,49 +653,44 @@ void ProtocolGame::GetFloorDescription(NetworkMessage& msg, int32_t x, int32_t y
 
 				skip = 0;
 				GetTileDescription(tile, msg);
-			} else if (skip == 0xFE) {
-				msg.addByte(0xFF);
-				msg.addByte(0xFF);
-				skip = -1;
 			} else {
-				++skip;
+				if (++skip == 0xFF) {
+					msg.addByte(0xFF);
+					msg.addByte(0xFF);
+					skip = -1;
+				}
 			}
 		}
 	}
 }
 
-void ProtocolGame::checkCreatureAsKnown(uint32_t id, bool& known, uint32_t& removedKnown)
+std::pair<bool, uint32_t> ProtocolGame::isKnownCreature(uint32_t id)
 {
 	auto result = knownCreatureSet.insert(id);
 	if (!result.second) {
-		known = true;
-		return;
+		return std::make_pair(true, 0);
 	}
-
-	known = false;
 
 	if (knownCreatureSet.size() > 250) {
 		// Look for a creature to remove
-		for (auto it = knownCreatureSet.begin(), end = knownCreatureSet.end(); it != end; ++it) {
-			Creature* creature = g_game.getCreatureByID(*it);
+		for (const uint32_t& creatureId : knownCreatureSet) {
+			Creature* creature = g_game.getCreatureByID(creatureId);
 			if (!canSee(creature)) {
-				removedKnown = *it;
-				knownCreatureSet.erase(it);
-				return;
+				knownCreatureSet.erase(creatureId);
+				return std::make_pair(false, creatureId);
 			}
 		}
 
 		// Bad situation. Let's just remove anyone.
-		auto it = knownCreatureSet.begin();
-		if (*it == id) {
-			++it;
+		auto creatureId = knownCreatureSet.begin();
+		if (*creatureId == id) {
+			++creatureId;
 		}
 
-		removedKnown = *it;
-		knownCreatureSet.erase(it);
-	} else {
-		removedKnown = 0;
+		knownCreatureSet.erase(creatureId);
+		return std::make_pair(false, *creatureId);
 	}
+	return {};
 }
 
 bool ProtocolGame::canSee(const Creature* c) const
@@ -1519,21 +1522,17 @@ void ProtocolGame::sendCloseContainer(uint8_t cid)
 	writeToOutputBuffer(msg);
 }
 
-void ProtocolGame::sendCreatureTurn(const Creature* creature, uint32_t stackPos)
+void ProtocolGame::sendCreatureTurn(const Creature* creature, uint32_t stackpos)
 {
-	if (!canSee(creature)) {
+	if (stackpos >= MAX_STACKPOS_THINGS || !canSee(creature)) {
 		return;
 	}
 
 	NetworkMessage msg;
 	msg.addByte(0x6B);
-	if (stackPos >= 10) {
-		msg.add<uint16_t>(0xFFFF);
-		msg.add<uint32_t>(creature->getID());
-	} else {
-		msg.addPosition(creature->getPosition());
-		msg.addByte(stackPos);
-	}
+	msg.addPosition(creature->getPosition());
+	msg.addByte(static_cast<uint8_t>(stackpos));
+
 
 	msg.add<uint16_t>(0x63);
 	msg.add<uint32_t>(creature->getID());
@@ -1713,7 +1712,7 @@ void ProtocolGame::sendMapDescription(const Position& pos)
 
 void ProtocolGame::sendAddTileItem(const Position& pos, uint32_t stackpos, const Item* item)
 {
-	if (!canSee(pos)) {
+	if (stackpos >= MAX_STACKPOS_THINGS || !canSee(pos)) {
 		return;
 	}
 
@@ -1727,7 +1726,7 @@ void ProtocolGame::sendAddTileItem(const Position& pos, uint32_t stackpos, const
 
 void ProtocolGame::sendUpdateTileItem(const Position& pos, uint32_t stackpos, const Item* item)
 {
-	if (!canSee(pos)) {
+	if (stackpos >= MAX_STACKPOS_THINGS || !canSee(pos)) {
 		return;
 	}
 
@@ -1752,7 +1751,7 @@ void ProtocolGame::sendRemoveTileThing(const Position& pos, uint32_t stackpos)
 
 void ProtocolGame::sendUpdateTileCreature(const Position& pos, uint32_t stackpos, const Creature* creature)
 {
-	if (!canSee(pos)) {
+	if (stackpos >= MAX_STACKPOS_THINGS || !canSee(pos)) {
 		return;
 	}
 
@@ -1761,31 +1760,9 @@ void ProtocolGame::sendUpdateTileCreature(const Position& pos, uint32_t stackpos
 	msg.addPosition(pos);
 	msg.addByte(stackpos);
 
-	bool known;
-	uint32_t removedKnown;
-	checkCreatureAsKnown(creature->getID(), known, removedKnown);
+	auto [known, removedKnown] = isKnownCreature(creature->getID());
 	AddCreature(msg, creature, false, removedKnown);
 
-	writeToOutputBuffer(msg);
-}
-
-void ProtocolGame::sendRemoveTileCreature(const Creature* creature, const Position& pos, uint32_t stackpos)
-{
-	if (stackpos < 10) {
-		if (!canSee(pos)) {
-			return;
-		}
-
-		NetworkMessage msg;
-		RemoveTileThing(msg, pos, stackpos);
-		writeToOutputBuffer(msg);
-		return;
-	}
-
-	NetworkMessage msg;
-	msg.addByte(0x6C);
-	msg.add<uint16_t>(0xFFFF);
-	msg.add<uint32_t>(creature->getID());
 	writeToOutputBuffer(msg);
 }
 
@@ -1828,27 +1805,13 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 	}
 
 	if (creature != player) {
-		// stack pos is always real index now, so it can exceed the limit
-		// if stack pos exceeds the limit, we need to refresh the tile instead
-		// 1. this is a rare case, and is only triggered by forcing summon in a position
-		// 2. since no stackpos will be send to the client about that creature, removing
-		//    it must be done with its id if its stackpos remains >= 10. this is done to
-		//    add creatures to battle list instead of rendering on screen
-		if (stackpos >= 10) {
-			// @todo: should we avoid this check?
-			if (const Tile* tile = creature->getTile()) {
-				sendUpdateTile(tile, pos);
-			}
-		} else {
-			// if stackpos is -1, the client will automatically detect it
+		if (stackpos != -1 && stackpos < MAX_STACKPOS_THINGS) {
 			NetworkMessage msg;
 			msg.addByte(0x6A);
 			msg.addPosition(pos);
 			msg.addByte(stackpos);
 
-			bool known;
-			uint32_t removedKnown;
-			checkCreatureAsKnown(creature->getID(), known, removedKnown);
+			auto [known, removedKnown] = isKnownCreature(creature->getID());
 			AddCreature(msg, creature, known, removedKnown);
 			writeToOutputBuffer(msg);
 		}
@@ -1906,22 +1869,17 @@ void ProtocolGame::sendAddCreature(const Creature* creature, const Position& pos
 void ProtocolGame::sendMoveCreature(const Creature* creature, const Position& newPos, int32_t newStackPos, const Position& oldPos, int32_t oldStackPos, bool teleport)
 {
 	if (creature == player) {
-		if (teleport) {
-			sendRemoveTileCreature(creature, oldPos, oldStackPos);
+		if (teleport || oldStackPos >= MAX_STACKPOS_THINGS) {
+			sendRemoveTileThing(oldPos, oldStackPos);
 			sendMapDescription(newPos);
 		} else {
 			NetworkMessage msg;
 			if (oldPos.z == 7 && newPos.z >= 8) {
-				RemoveTileCreature(msg, creature, oldPos, oldStackPos);
+				RemoveTileThing(msg, oldPos, oldStackPos);
 			} else {
 				msg.addByte(0x6D);
-				if (oldStackPos < 10) {
-					msg.addPosition(oldPos);
-					msg.addByte(oldStackPos);
-				} else {
-					msg.add<uint16_t>(0xFFFF);
-					msg.add<uint32_t>(creature->getID());
-				}
+				msg.addPosition(oldPos);
+				msg.addByte(static_cast<uint8_t>(oldStackPos));
 				msg.addPosition(newPos);
 			}
 
@@ -1931,42 +1889,56 @@ void ProtocolGame::sendMoveCreature(const Creature* creature, const Position& ne
 				MoveUpCreature(msg, creature, newPos, oldPos);
 			}
 
-			if (oldPos.y > newPos.y) { // north, for old x
-				msg.addByte(0x65);
-				GetMapDescription(oldPos.x - Map::maxClientViewportX, newPos.y - Map::maxClientViewportY, newPos.z, (Map::maxClientViewportX * 2) + 2, 1, msg);
-			} else if (oldPos.y < newPos.y) { // south, for old x
-				msg.addByte(0x67);
-				GetMapDescription(oldPos.x - Map::maxClientViewportX, newPos.y + (Map::maxClientViewportY + 1), newPos.z, (Map::maxClientViewportX * 2) + 2, 1, msg);
+			if (newStackPos >= MAX_STACKPOS_THINGS) {
+				msg.addByte(0x64);
+				msg.addPosition(player->getPosition());
+				GetMapDescription(newPos.x - Map::maxClientViewportX, newPos.y - Map::maxClientViewportY, newPos.z,
+					(Map::maxClientViewportX * 2) + 2, (Map::maxClientViewportY * 2) + 2, msg);
 			}
+			else {
+				if (oldPos.y > newPos.y) { // north, for old x
+					msg.addByte(0x65);
+					GetMapDescription(oldPos.x - Map::maxClientViewportX, newPos.y - Map::maxClientViewportY, newPos.z,
+						(Map::maxClientViewportX * 2) + 2, 1, msg);
+				}
+				else if (oldPos.y < newPos.y) { // south, for old x
+					msg.addByte(0x67);
+					GetMapDescription(oldPos.x - Map::maxClientViewportX, newPos.y + (Map::maxClientViewportY + 1),
+						newPos.z, (Map::maxClientViewportX * 2) + 2, 1, msg);
+				}
 
-			if (oldPos.x < newPos.x) { // east, [with new y]
-				msg.addByte(0x66);
-				GetMapDescription(newPos.x + (Map::maxClientViewportX + 1), newPos.y - Map::maxClientViewportY, newPos.z, 1, (Map::maxClientViewportY * 2) + 2, msg);
-			} else if (oldPos.x > newPos.x) { // west, [with new y]
-				msg.addByte(0x68);
-				GetMapDescription(newPos.x - Map::maxClientViewportX, newPos.y - Map::maxClientViewportY, newPos.z, 1, (Map::maxClientViewportY * 2) + 2, msg);
+				if (oldPos.x < newPos.x) { // east, [with new y]
+					msg.addByte(0x66);
+					GetMapDescription(newPos.x + (Map::maxClientViewportX + 1), newPos.y - Map::maxClientViewportY,
+						newPos.z, 1, (Map::maxClientViewportY * 2) + 2, msg);
+				}
+				else if (oldPos.x > newPos.x) { // west, [with new y]
+					msg.addByte(0x68);
+					GetMapDescription(newPos.x - Map::maxClientViewportX, newPos.y - Map::maxClientViewportY, newPos.z,
+						1, (Map::maxClientViewportY * 2) + 2, msg);
+				}
 			}
 			writeToOutputBuffer(msg);
 		}
-	} else if (canSee(oldPos) && canSee(creature->getPosition())) {
-		if (teleport || (oldPos.z == 7 && newPos.z >= 8)) {
-			sendRemoveTileCreature(creature, oldPos, oldStackPos);
+	}
+	else if (canSee(oldPos) && canSee(creature->getPosition())) {
+		if (!player->canSeeCreature(creature))
+			return;
+		if (teleport || (oldPos.z == 7 && newPos.z >= 8) || oldStackPos >= MAX_STACKPOS_THINGS) {
+			sendRemoveTileThing(oldPos, oldStackPos);
+
 			sendAddCreature(creature, newPos, newStackPos, false);
-		} else {
+		}
+		else {
 			NetworkMessage msg;
 			msg.addByte(0x6D);
-			if (oldStackPos < 10) {
-				msg.addPosition(oldPos);
-				msg.addByte(oldStackPos);
-			} else {
-				msg.add<uint16_t>(0xFFFF);
-				msg.add<uint32_t>(creature->getID());
-			}
+			msg.addPosition(oldPos);
+			msg.addByte(static_cast<uint8_t>(oldStackPos));
 			msg.addPosition(creature->getPosition());
 			writeToOutputBuffer(msg);
 		}
 	} else if (canSee(oldPos)) {
-		sendRemoveTileCreature(creature, oldPos, oldStackPos);
+		sendRemoveTileThing(oldPos, oldStackPos);
 	} else if (canSee(creature->getPosition())) {
 		sendAddCreature(creature, newPos, newStackPos, false);
 	}
@@ -2287,25 +2259,13 @@ void ProtocolGame::AddCreatureLight(NetworkMessage& msg, const Creature* creatur
 //tile
 void ProtocolGame::RemoveTileThing(NetworkMessage& msg, const Position& pos, uint32_t stackpos)
 {
-	if (stackpos >= 10) {
+	if (stackpos >= MAX_STACKPOS_THINGS) {
 		return;
 	}
 
 	msg.addByte(0x6C);
 	msg.addPosition(pos);
 	msg.addByte(stackpos);
-}
-
-void ProtocolGame::RemoveTileCreature(NetworkMessage& msg, const Creature* creature, const Position& pos, uint32_t stackpos)
-{
-	if (stackpos < 10) {
-		RemoveTileThing(msg, pos, stackpos);
-		return;
-	}
-
-	msg.addByte(0x6C);
-	msg.add<uint16_t>(0xFFFF);
-	msg.add<uint32_t>(creature->getID());
 }
 
 void ProtocolGame::MoveUpCreature(NetworkMessage& msg, const Creature* creature, const Position& newPos, const Position& oldPos)

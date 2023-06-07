@@ -83,7 +83,7 @@ class ProtocolGame final : public Protocol
 
 		void release() override;
 
-		void checkCreatureAsKnown(uint32_t id, bool& known, uint32_t& removedKnown);
+		std::pair<bool, uint32_t> isKnownCreature(uint32_t id);
 
 		bool canSee(int32_t x, int32_t y, int32_t z) const;
 		bool canSee(const Creature*) const;
@@ -164,7 +164,7 @@ class ProtocolGame final : public Protocol
 		void sendCreatureHealth(const Creature* creature);
 		void sendSkills();
 		void sendPing();
-		void sendCreatureTurn(const Creature* creature, uint32_t stackPos);
+		void sendCreatureTurn(const Creature* creature, uint32_t stackpos);
 		void sendCreatureSay(const Creature* creature, SpeakClasses type, const std::string& text, const Position* pos = nullptr);
 
 		void sendQuestLog();
@@ -215,7 +215,6 @@ class ProtocolGame final : public Protocol
 		void sendUpdateTileItem(const Position& pos, uint32_t stackpos, const Item* item);
 		void sendRemoveTileThing(const Position& pos, uint32_t stackpos);
 		void sendUpdateTileCreature(const Position& pos, uint32_t stackpos, const Creature* creature);
-		void sendRemoveTileCreature(const Creature* creature, const Position& pos, uint32_t stackpos);
 		void sendUpdateTile(const Tile* tile, const Position& pos);
 
 		void sendAddCreature(const Creature* creature, const Position& pos, int32_t stackpos, bool isLogin);

@@ -327,9 +327,10 @@ void Map::moveCreature(Creature& creature, Tile& newTile, bool forceTeleport/* =
 	for (Creature* spectator : spectators) {
 		if (Player* tmpPlayer = spectator->getPlayer()) {
 			//Use the correct stackpos
-			int32_t stackpos = oldStackPosVector[i++];
-			if (stackpos != -1) {
-				tmpPlayer->sendCreatureMove(&creature, newPos, newTile.getClientIndexOfCreature(tmpPlayer, &creature), oldPos, stackpos, teleport);
+			int32_t oldStackPos = oldStackPosVector[i++];
+			if (oldStackPos != -1) {
+				tmpPlayer->sendCreatureMove(&creature, newPos, newTile.getClientIndexOfCreature(tmpPlayer, &creature),
+					oldPos, oldStackPos, teleport);
 			}
 		}
 	}

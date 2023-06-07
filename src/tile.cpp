@@ -1207,24 +1207,18 @@ int32_t Tile::getStackposOfItem(const Player* player, const Item* item) const
 			for (auto it = items->getBeginTopItem(), end = items->getEndTopItem(); it != end; ++it) {
 				if (*it == item) {
 					return n;
-				} else if (++n == 10) {
-					return -1;
 				}
+				++n;
 			}
 		} else {
 			n += items->getTopItemCount();
-			if (n >= 10) {
-				return -1;
-			}
 		}
 	}
 
 	if (const CreatureVector* creatures = getCreatures()) {
 		for (const Creature* creature : *creatures) {
 			if (player->canSeeCreature(creature)) {
-				if (++n >= 10) {
-					return -1;
-				}
+				++n;
 			}
 		}
 	}
@@ -1233,9 +1227,8 @@ int32_t Tile::getStackposOfItem(const Player* player, const Item* item) const
 		for (auto it = items->getBeginDownItem(), end = items->getEndDownItem(); it != end; ++it) {
 			if (*it == item) {
 				return n;
-			} else if (++n >= 10) {
-				return -1;
 			}
+			++n;
 		}
 	}
 	return -1;

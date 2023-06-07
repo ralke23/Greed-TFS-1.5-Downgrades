@@ -20,7 +20,7 @@
 #ifndef FS_DEFINITIONS_H_877452FEC245450C9F96B8FD268D8963
 #define FS_DEFINITIONS_H_877452FEC245450C9F96B8FD268D8963
 
-static constexpr auto STATUS_SERVER_NAME = "GreedOT TFS";
+static constexpr auto STATUS_SERVER_NAME = "Greed";
 static constexpr auto STATUS_SERVER_VERSION = "1.5";
 static constexpr auto STATUS_SERVER_DEVELOPERS = "ralke";
 
