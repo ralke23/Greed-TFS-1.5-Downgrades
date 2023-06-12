@@ -183,8 +183,21 @@ void ProtocolGame::login(const std::string& name, uint32_t accountId, OperatingS
 		}
 
 		if (g_config.getBoolean(ConfigManager::ONE_PLAYER_ON_ACCOUNT) && player->getAccountType() < ACCOUNT_TYPE_GAMEMASTER && g_game.getPlayerByAccount(player->getAccount())) {
-			disconnectClient("You may only login with one character\nof your account at the same time.");
-			return;
+			if (player->isPremium()) {
+				int onlineChars = 0;
+				for (const auto& it : g_game.getPlayers()) {
+					if (it.second->getAccount() == player->getAccount())
+						onlineChars++;
+				}
+				if (onlineChars >= 3) {
+					disconnectClient("You may only login with three characters\nof your account at the same time.");
+					return;
+				}
+			}
+			else {
+				disconnectClient("You may only login with one character\nof your account at the same time.");
+				return;
+			}
 		}
 
 		if (!player->hasFlag(PlayerFlag_CannotBeBanned)) {
