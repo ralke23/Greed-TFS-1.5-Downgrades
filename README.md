@@ -1,3 +1,9 @@
+# Greed 8.60 Downgrade
+
+This downgrade is not download and run distribution, only some monsters and spells are probably working.
+This downgrade is up to date on year 2023 based on OTland fixes, recent commits: https://github.com/ralke23/Greed-TFS-1.5-Downgrades/commits/8.60
+This downgrade uses Nekiro 8.60 Downgrade as source base for cpp files.
+
 # Nekiro's 8.60 Downgrade
 
 This downgrade is not download and run distribution, monsters and spells are probably not 100% correct.
