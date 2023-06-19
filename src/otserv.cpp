@@ -138,8 +138,8 @@ void printServerVersion()
 	std::cout << std::endl;
 
 	std::cout << "A server developed by " << STATUS_SERVER_DEVELOPERS << std::endl;
-	std::cout << "Downgraded and further developed by Nekiro" << std::endl;
-	std::cout << "Visit our forum for updates, support, and resources: https://otland.net/." << std::endl;
+	std::cout << "Copyright (C) 2019  Mark Samman" << std::endl;
+	std::cout << "Visit the game at: https://greedot.net/." << std::endl;
 	std::cout << std::endl;
 }
 

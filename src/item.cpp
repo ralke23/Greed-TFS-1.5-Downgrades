@@ -954,7 +954,7 @@ std::string Item::getDescription(const ItemType& it, int32_t lookDistance,
 			}
 
 			begin = false;
-		} else if (it.weaponType != WEAPON_AMMO) {
+		} else {
 			int32_t attack, defense, extraDefense;
 			if (item) {
 				attack = item->getAttack();
