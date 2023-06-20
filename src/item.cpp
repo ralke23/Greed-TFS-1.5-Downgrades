@@ -954,6 +954,27 @@ std::string Item::getDescription(const ItemType& it, int32_t lookDistance,
 			}
 
 			begin = false;
+		}
+		else if (it.weaponType == WEAPON_AMMO) {
+
+			int32_t attack = item ? item->getAttack() : it.attack;
+			if (attack != 0) {
+				begin = false;
+				s << " (Atk:" << attack;
+			}
+
+			int32_t maxHitChance = it.maxHitChance;
+			if (maxHitChance > 0) {
+				if (begin) {
+					begin = false;
+					s << " (";
+				}
+				else {
+					s << ", ";
+				}
+
+				s << "Max Hit%+" << maxHitChance;
+			}
 		} else {
 			int32_t attack, defense, extraDefense;
 			if (item) {
