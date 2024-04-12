@@ -287,7 +287,8 @@ bool Spawn::isInSpawnZone(const Position& pos)
 
 bool Spawn::spawnMonster(uint32_t spawnId, spawnBlock_t sb, bool startup/* = false*/)
 {
-	bool isBlocked = !startup && findPlayer(sb.pos);
+	//bool isBlocked = !startup && findPlayer(sb.pos);
+	bool isBlocked = false;
 	size_t monstersCount = sb.mTypes.size(), blockedMonsters = 0;
 
 	const auto spawnFunc = [&](bool roll) {
