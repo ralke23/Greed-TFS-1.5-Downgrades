@@ -149,12 +149,6 @@ void Creature::onThink(uint32_t interval)
 		blockTicks = 0;
 	}
 
-	if (followCreature) {
-		goToFollowCreature();
-	}
-
-	forceUpdateFollowPath = true;
-
 	//scripting event - onThink
 	const CreatureEventList& thinkEvents = getCreatureEvents(CREATURE_EVENT_THINK);
 	for (CreatureEvent* thinkEvent : thinkEvents) {
@@ -162,33 +156,12 @@ void Creature::onThink(uint32_t interval)
 	}
 }
 
-void Creature::checkPath()
+void Creature::forceUpdatePath()
 {
-	if (followCreature && !attackedCreature && followPosition != followCreature->getPosition()) {
-		goToFollowCreature();
-		return;
-	}
-	if (!attackedCreature) {
+	if (!attackedCreature && !followCreature) {
 		return;
 	}
 
-	const Position& targetPos = attackedCreature->getPosition();
-	if (!forceUpdateFollowPath || followPosition == targetPos) {
-		return;
-	}
-
-	forceUpdateFollowPath = false;
-
-	FindPathParams fpp;
-	getPathSearchParams(attackedCreature, fpp);
-	const Position& pos = getPosition();
-	if (Position::getDistanceX(pos, targetPos) > fpp.maxSearchDist ||
-		Position::getDistanceY(pos, targetPos) > fpp.maxSearchDist) {
-		// Attacked Creature has gone too far. Stop trying to get a path.
-		listWalkDir.clear();
-		return;
-	}
-	followPosition = attackedCreature->getPosition();
 	g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
 }
 
@@ -236,6 +209,8 @@ void Creature::onWalk()
 		}
 	}
 
+	updateFollowingCreaturesPath();
+
 	if (cancelNextWalk) {
 		listWalkDir.clear();
 		onWalkAborted();
@@ -245,6 +220,22 @@ void Creature::onWalk()
 	if (eventWalk != 0) {
 		eventWalk = 0;
 		addEventWalk();
+	}
+	if (getTimeSinceLastMove() >= 500) {
+		const Position& position = getPosition();
+
+		if (attackedCreature) {
+			const Position& targetPosition = attackedCreature->getPosition();
+			if (Position::getDistanceX(position, targetPosition) <= Map::maxViewportX && Position::getDistanceY(position, targetPosition) <= Map::maxViewportY) {
+				g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
+			}
+		}
+		else if (followCreature) {
+			const Position& targetPosition = followCreature->getPosition();
+			if (Position::getDistanceX(position, targetPosition) <= Map::maxViewportX && Position::getDistanceY(position, targetPosition) <= Map::maxViewportY) {
+				g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
+			}
+		}
 	}
 }
 
@@ -913,9 +904,11 @@ bool Creature::setAttackedCreature(Creature* creature)
 		}
 
 		attackedCreature = creature;
-		followPosition = creaturePos;
+		creature->addFollowedByCreature(this);
+		//followPosition = creaturePos;
 		onAttackedCreature(attackedCreature);
 		attackedCreature->onAttacked();
+		g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
 	} else {
 		attackedCreature = nullptr;
 	}
@@ -930,7 +923,7 @@ void Creature::getPathSearchParams(const Creature*, FindPathParams& fpp) const
 {
 	fpp.fullPathSearch = !hasFollowPath;
 	fpp.clearSight = true;
-	fpp.maxSearchDist = 12;
+	fpp.maxSearchDist = Map::maxViewportX;
 	fpp.minTargetDist = 1;
 	fpp.maxTargetDist = 1;
 }
@@ -942,15 +935,60 @@ void Creature::goToFollowCreature()
 		FindPathParams fpp;
 		getPathSearchParams(followCreature, fpp);
 
-		listWalkDir.clear();
+		Monster* monster = getMonster();
+		if (monster && !monster->getMaster() && (monster->isFleeing() || fpp.maxTargetDist > 1)) {
+			Direction dir = DIRECTION_NONE;
 
-		if (getPathTo(followCreature->getPosition(), listWalkDir, fpp))
-		{
-			hasFollowPath = true;
-			startAutoWalk(listWalkDir);
+			if (monster->isFleeing()) {
+				const Position& targetPosition = followCreature->getPosition();
+				const Position& thisPosition = getPosition();
+
+				const int_fast32_t distanceToTarget = Position::getDistanceX(thisPosition, targetPosition) + Position::getDistanceY(thisPosition, targetPosition);
+				if (distanceToTarget <= 2 && !hasFollowPath) {
+					listWalkDir.clear();
+					if (getPathTo(followCreature->getPosition(), listWalkDir, fpp)) {
+						hasFollowPath = true;
+						startAutoWalk();
+					}
+				}
+				else {
+					monster->getDistanceStep(followCreature->getPosition(), dir, true);
+					// hasFollowPath = false;
+				}
+			}
+			else { // maxTargetDist > 1
+				if (!monster->getDistanceStep(followCreature->getPosition(), dir)) {
+					// if we can't get anything then let the A* calculate
+					listWalkDir.clear();
+					if (getPathTo(followCreature->getPosition(), listWalkDir, fpp)) {
+						hasFollowPath = true;
+						startAutoWalk();
+					}
+					else {
+						hasFollowPath = false;
+					}
+					return;
+				}
+			}
+
+			if (dir != DIRECTION_NONE) {
+				listWalkDir.clear();
+				listWalkDir.push_back(dir);
+
+				hasFollowPath = true;
+				startAutoWalk();
+			}
 		}
-		else
-			hasFollowPath = false;
+		else {
+			listWalkDir.clear();
+			if (getPathTo(followCreature->getPosition(), listWalkDir, fpp)) {
+				hasFollowPath = true;
+				startAutoWalk();
+			}
+			else {
+				hasFollowPath = false;
+			}
+		}
 	}
 
 	onFollowCreatureComplete(followCreature);
@@ -976,13 +1014,56 @@ bool Creature::setFollowCreature(Creature* creature)
 
 		hasFollowPath = false;
 		followCreature = creature;
-		followPosition = creaturePos;
-	} else {
+		creature->addFollowedByCreature(this);
+		g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
+		//followPosition = creaturePos;
+	}
+	else {
 		followCreature = nullptr;
 	}
 
 	onFollowCreature(creature);
 	return true;
+}
+
+// Pathfinding Functions
+void Creature::addFollowedByCreature(Creature* creature)
+{
+	if (creature) {
+		followedByCreatures.push_back(creature);
+	}
+}
+
+// Pathfinding Events
+void Creature::updateFollowingCreaturesPath()
+{
+	if (followedByCreatures.empty()) {
+		return;
+	}
+
+	std::list<Creature*> newFollowedByList;
+	for (Creature* followedByCreature : followedByCreatures) {
+		if (followedByCreature == nullptr) {
+			continue;
+		}
+
+		if (!canSee(followedByCreature->getPosition())) {
+			continue;
+		}
+
+		newFollowedByList.push_back(followedByCreature);
+		g_dispatcher.addTask(createTask([id = followedByCreature->getID()]() { g_game.updateCreatureWalk(id); }));
+	}
+
+	followedByCreatures.clear();
+
+	for (Creature* newFollowCreature : newFollowedByList) {
+		if (newFollowCreature == nullptr) {
+			continue;
+		}
+
+		addFollowedByCreature(newFollowCreature);
+	}
 }
 
 double Creature::getDamageRatio(Creature* attacker) const

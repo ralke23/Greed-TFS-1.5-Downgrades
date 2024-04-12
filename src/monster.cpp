@@ -884,7 +884,7 @@ void Monster::doAttacking(uint32_t interval)
 		}
 	}
 
-	if (updateLook) {
+	if (updateLook && lastMeleeAttack == 0 && !isFleeing()) {
 		updateLookDirection();
 	}
 
@@ -2088,7 +2088,7 @@ void Monster::getPathSearchParams(const Creature* creature, FindPathParams& fpp)
 	if (isSummon()) {
 		if (getMaster() == creature) {
 			fpp.maxTargetDist = 2;
-			fpp.keepDistance = true;
+			//fpp.keepDistance = true;
 			fpp.fullPathSearch = true;
 		} else if (mType->info.targetDistance <= 1) {
 			fpp.fullPathSearch = true;

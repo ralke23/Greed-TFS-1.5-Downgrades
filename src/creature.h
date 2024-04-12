@@ -68,8 +68,8 @@ class Item;
 class Tile;
 
 static constexpr int32_t EVENT_CREATURECOUNT = 10;
-static constexpr int32_t EVENT_CREATURE_THINK_INTERVAL = 1000;
-static constexpr int32_t EVENT_CREATURE_PATH_INTERVAL = 50;
+static constexpr int32_t EVENT_CREATURE_THINK_INTERVAL = 500;
+static constexpr int32_t EVENT_CREATURE_PATH_INTERVAL = 500;
 static constexpr int32_t EVENT_CHECK_CREATURE_INTERVAL = (EVENT_CREATURE_THINK_INTERVAL / EVENT_CREATURECOUNT);
 
 class FrozenPathingConditionCall
@@ -273,6 +273,12 @@ class Creature : virtual public Thing
 		virtual void onFollowCreature(const Creature*) {}
 		virtual void onFollowCreatureComplete(const Creature*) {}
 
+		// Pathfinding functions
+			virtual void addFollowedByCreature(Creature * creature);
+
+		// Pathfinding events
+		void updateFollowingCreaturesPath();
+
 		//combat functions
 		Creature* getAttackedCreature() {
 			return attackedCreature;
@@ -378,7 +384,8 @@ class Creature : virtual public Thing
 		void setCreatureLight(LightInfo lightInfo);
 
 		virtual void onThink(uint32_t interval);
-		virtual void checkPath();
+		//virtual void checkPath();
+		virtual void forceUpdatePath();
 		void onAttacking(uint32_t interval);
 		virtual void onWalk();
 		virtual bool getNextStep(Direction& dir, uint32_t& flags);
@@ -501,9 +508,10 @@ class Creature : virtual public Thing
 
 		Tile* tile = nullptr;
 		Creature* attackedCreature = nullptr;
-		Position followPosition;
+		//Position followPosition;
 		Creature* master = nullptr;
 		Creature* followCreature = nullptr;
+		std::list<Creature*> followedByCreatures;
 
 		uint64_t lastStep = 0;
 		uint32_t referenceCounter = 0;
@@ -539,7 +547,7 @@ class Creature : virtual public Thing
 		bool skillLoss = true;
 		bool lootDrop = true;
 		bool cancelNextWalk = false;
-		bool forceUpdateFollowPath = false;
+		//bool forceUpdateFollowPath = false;
 		bool hasFollowPath = false;
 		bool hiddenHealth = false;
 		bool canUseDefense = true;
