@@ -1012,7 +1012,7 @@ bool Creature::setFollowCreature(Creature* creature)
 			onWalkAborted();
 		}
 
-		hasFollowPath = false;
+		//hasFollowPath = false;
 		followCreature = creature;
 		creature->addFollowedByCreature(this);
 		g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));

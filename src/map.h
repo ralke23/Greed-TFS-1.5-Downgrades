@@ -40,29 +40,30 @@ static constexpr int32_t MAP_MAX_LAYERS = 16;
 
 struct FindPathParams;
 
-static constexpr float MAP_NORMALWALKCOST = 1.0f;
-static constexpr float MAP_DIAGONALWALKCOST = 2.5f;
-
 struct AStarNode {
 	AStarNode* parent;
-	float h;
-	float f;
+	double g;
+	double f;
 	uint16_t x, y;
 };
+
+static constexpr float MAP_NORMALWALKCOST = 1.0f;
+static constexpr float MAP_DIAGONALWALKCOST = 2.5f;
 
 class AStarNodes
 {
 public:
 	AStarNodes(uint16_t x, uint16_t y);
 
-	void createNewNode(AStarNode* parent, uint16_t x, uint16_t y, float h, float f);
+	void createNewNode(AStarNode* parent, uint16_t x, uint16_t y, double g, double f);
 	void addNode(AStarNode* node) { nodes.push_back(node); };
 
 	AStarNode* getBestNode();
 	AStarNode* getNodeByPosition(uint16_t x, uint16_t y) { return nodeMap[x][y]; };
 
-	static float getMapWalkCost(AStarNode* node, const Position& neighborPos);
-	static float getTileWalkCost(const Creature& creature, const Tile* tile);
+	static double calculateHeuristic(const Position& p1, const Position& p2);
+	static double getMapWalkCost(AStarNode* node, const Position& neighborPos);
+	static double getTileWalkCost(const Creature& creature, const Tile* tile);
 
 private:
 	std::vector<AStarNode*> nodes;
