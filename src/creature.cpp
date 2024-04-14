@@ -158,11 +158,13 @@ void Creature::onThink(uint32_t interval)
 
 void Creature::forceUpdatePath()
 {
-	if (!attackedCreature && !followCreature) {
-		return;
-	}
+	if (attackedCreature || followCreature) {
+		const Position& position = attackedCreature ? attackedCreature->getPosition() : followCreature->getPosition();
 
-	g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
+	if (g_game.isSightClear(getPosition(), position, true)) {
+			g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
+		}
+	}
 }
 
 void Creature::onAttacking(uint32_t interval)
@@ -221,18 +223,21 @@ void Creature::onWalk()
 		eventWalk = 0;
 		addEventWalk();
 	}
+
 	if (getTimeSinceLastMove() >= 500) {
 		const Position& position = getPosition();
 
 		if (attackedCreature) {
 			const Position& targetPosition = attackedCreature->getPosition();
-			if (Position::getDistanceX(position, targetPosition) <= Map::maxViewportX && Position::getDistanceY(position, targetPosition) <= Map::maxViewportY) {
+			if (Position::getDistanceX(position, targetPosition) <= Map::maxViewportX &&
+				Position::getDistanceY(position, targetPosition) <= Map::maxViewportY) {
 				g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
 			}
 		}
 		else if (followCreature) {
 			const Position& targetPosition = followCreature->getPosition();
-			if (Position::getDistanceX(position, targetPosition) <= Map::maxViewportX && Position::getDistanceY(position, targetPosition) <= Map::maxViewportY) {
+			if (Position::getDistanceX(position, targetPosition) <= Map::maxViewportX &&
+				Position::getDistanceY(position, targetPosition) <= Map::maxViewportY) {
 				g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
 			}
 		}
