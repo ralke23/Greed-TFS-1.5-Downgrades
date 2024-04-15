@@ -60,6 +60,7 @@ public:
 
 	AStarNode* getBestNode();
 	AStarNode* getNodeByPosition(uint16_t x, uint16_t y) { return nodeMap[x][y]; };
+	void clear() { nodes.clear(); nodeMap.clear(); };
 
 	static double calculateHeuristic(const Position& p1, const Position& p2);
 	static double getMapWalkCost(AStarNode* node, const Position& neighborPos);

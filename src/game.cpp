@@ -73,7 +73,8 @@ void Game::start(ServiceManager* manager)
 		g_scheduler.addEvent(createSchedulerTask(EVENT_LIGHTINTERVAL, std::bind(&Game::checkLight, this)));
 	}
 	g_scheduler.addEvent(createSchedulerTask(EVENT_CREATURE_THINK_INTERVAL, std::bind(&Game::checkCreatures, this, 0)));
-	g_scheduler.addEvent(createSchedulerTask(EVENT_CREATURE_PATH_INTERVAL, [this]() { updateCreaturesPath(0); }));
+	g_scheduler.addEvent(createSchedulerTask(g_config.getNumber(ConfigManager::PATHFINDING_INTERVAL),
+		[this]() { updateCreaturesPath(0); }));
 	g_scheduler.addEvent(createSchedulerTask(EVENT_DECAYINTERVAL, std::bind(&Game::checkDecay, this)));
 }
 
@@ -3600,7 +3601,7 @@ void Game::checkCreatures(size_t index)
 
 void Game::updateCreaturesPath(size_t index)
 {
-	g_scheduler.addEvent(createSchedulerTask(EVENT_CREATURE_PATH_INTERVAL, [=]() { updateCreaturesPath((index + 1) % EVENT_CREATURECOUNT); }));
+	g_scheduler.addEvent(createSchedulerTask(g_config.getNumber(ConfigManager::PATHFINDING_INTERVAL), [=]() { updateCreaturesPath((index + 1) % EVENT_CREATURECOUNT); }));
 
 	auto& checkCreatureList = checkCreatureLists[index];
 	auto it = checkCreatureList.begin(), end = checkCreatureList.end();

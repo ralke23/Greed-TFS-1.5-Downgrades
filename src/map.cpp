@@ -722,6 +722,7 @@ bool Map::getPathMatching(const Creature& creature, const Position& targetPos, s
 		const int_fast32_t y = n->y;
 		pos.x = x;
 		pos.y = y;
+		// Will be removed on future
 		if (pathCondition(startPos, pos, fpp, bestMatch)) {
 			found = n;
 			endPos = pos;
@@ -735,8 +736,8 @@ bool Map::getPathMatching(const Creature& creature, const Position& targetPos, s
 			pos.y = y + allNeighbors[i][1];
 
 			if (fpp.maxSearchDist != 0 &&
-				(Position::getDistanceX(startPos, pos) > fpp.maxSearchDist || Position::getDistanceY(startPos, pos) > fpp.maxSearchDist)) {
-				continue;
+				(Position::getDistanceX(startPos, pos) > fpp.maxSearchDist + 1 || Position::getDistanceY(startPos, pos) > fpp.maxSearchDist + 1)) {
+				break;
 			}
 
 			if (fpp.keepDistance && !pathCondition.isInRange(startPos, pos, fpp)) {
@@ -778,6 +779,8 @@ bool Map::getPathMatching(const Creature& creature, const Position& targetPos, s
 
 		n = nodes.getBestNode();
 	}
+
+	nodes.clear();
 
 	if (!found) {
 		return false;
