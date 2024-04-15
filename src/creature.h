@@ -20,6 +20,7 @@
 #ifndef FS_CREATURE_H_5363C04015254E298F84E6D59A139508
 #define FS_CREATURE_H_5363C04015254E298F84E6D59A139508
 
+#include "configmanager.h"
 #include "map.h"
 #include "position.h"
 #include "condition.h"
@@ -27,6 +28,8 @@
 #include "tile.h"
 #include "enums.h"
 #include "creatureevent.h"
+
+extern ConfigManager g_config;
 
 using ConditionList = std::list<Condition*>;
 using CreatureEventList = std::list<CreatureEvent*>;
@@ -69,8 +72,11 @@ class Tile;
 
 static constexpr int32_t EVENT_CREATURECOUNT = 10;
 static constexpr int32_t EVENT_CREATURE_THINK_INTERVAL = 1000;
-static constexpr int32_t EVENT_CREATURE_PATH_INTERVAL = 200;
+//static constexpr int32_t EVENT_CREATURE_PATH_INTERVAL = 100;
 static constexpr int32_t EVENT_CHECK_CREATURE_INTERVAL = (EVENT_CREATURE_THINK_INTERVAL / EVENT_CREATURECOUNT);
+
+static int32_t EVENT_CREATURE_PATH_INTERVAL = g_config.getNumber(ConfigManager::PATHFINDING_INTERVAL);
+static int32_t EVENT_CREATURE_PATH_DELAY = g_config.getNumber(ConfigManager::PATHFINDING_DELAY);
 
 class FrozenPathingConditionCall
 {
@@ -274,7 +280,7 @@ class Creature : virtual public Thing
 		virtual void onFollowCreatureComplete(const Creature*) {}
 
 		// Pathfinding functions
-			virtual void addFollowedByCreature(Creature * creature);
+		virtual void addFollowedByCreature(Creature* creature) { followedByCreatures.push_back(creature); };
 
 		// Pathfinding events
 		void updateFollowingCreaturesPath();
@@ -514,6 +520,7 @@ class Creature : virtual public Thing
 		std::list<Creature*> followedByCreatures;
 
 		uint64_t lastStep = 0;
+		int64_t lastPathUpdate = 0;
 		uint32_t referenceCounter = 0;
 		uint32_t id = 0;
 		uint32_t scriptEventsBitField = 0;
