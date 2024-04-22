@@ -900,11 +900,11 @@ bool Creature::setAttackedCreature(Creature* creature)
 		//followPosition = creaturePos;
 		onAttackedCreature(attackedCreature);
 		attackedCreature->onAttacked();
-		FindPathParams fpp;
-		getPathSearchParams(attackedCreature, fpp);
-		if (getPathTo(creaturePos, listWalkDir, fpp)) {
-			startAutoWalk();
-		}
+		//FindPathParams fpp;
+		//getPathSearchParams(attackedCreature, fpp);
+		//if (getPathTo(creaturePos, listWalkDir, fpp)) {
+		//	startAutoWalk();
+		//}
 	} else {
 		attackedCreature = nullptr;
 	}
@@ -1008,22 +1008,21 @@ bool Creature::setFollowCreature(Creature* creature)
 			onWalkAborted();
 		}
 
-		//hasFollowPath = false;
 		followCreature = creature;
 		creature->addFollowedByCreature(this);
-		FindPathParams fpp;
-		getPathSearchParams(followCreature, fpp);
-		if (getPathTo(creaturePos, listWalkDir, fpp)) {
-			hasFollowPath = true;
-			startAutoWalk();
-		}
-		else {
-			hasFollowPath = false;
-		}
+		//FindPathParams fpp;
+		//getPathSearchParams(followCreature, fpp);
+		//if (getPathTo(creaturePos, listWalkDir, fpp)) {
+		//	hasFollowPath = true;
+		//	startAutoWalk();
+		//}
+		//else {
+		//	hasFollowPath = false;
+		//}
 		//g_dispatcher.addTask(createTask([id = getID()]() { g_game.updateCreatureWalk(id); }));
 		//followPosition = creaturePos;
-	}
-	else {
+		hasFollowPath = false;
+	} else {
 		followCreature = nullptr;
 	}
 
