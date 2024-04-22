@@ -87,9 +87,11 @@ class NpcEventsHandler
 
 		bool isLoaded() const;
 
+		std::unique_ptr<NpcScriptInterface> scriptInterface;
+
 	private:
 		Npc* npc;
-		NpcScriptInterface* scriptInterface;
+		//NpcScriptInterface* scriptInterface;
 
 		int32_t creatureAppearEvent = -1;
 		int32_t creatureDisappearEvent = -1;
@@ -175,7 +177,8 @@ class Npc final : public Creature
 		void turnToCreature(Creature* creature);
 		void setCreatureFocus(Creature* creature);
 
-		NpcScriptInterface* getScriptInterface();
+		//NpcScriptInterface* getScriptInterface();
+		auto& getScriptInterface() { return npcEventHandler->scriptInterface; }
 
 		static uint32_t npcAutoID;
 
@@ -222,7 +225,8 @@ class Npc final : public Creature
 		std::string name;
 		std::string filename;
 
-		NpcEventsHandler* npcEventHandler;
+		//NpcEventsHandler* npcEventHandler;
+		std::unique_ptr<NpcEventsHandler> npcEventHandler;
 
 		Position masterPos;
 
@@ -239,7 +243,7 @@ class Npc final : public Creature
 		bool isIdle;
 		bool pushable;
 
-		static NpcScriptInterface* scriptInterface;
+		//static NpcScriptInterface* scriptInterface;
 
 		friend class Npcs;
 		friend class NpcScriptInterface;
