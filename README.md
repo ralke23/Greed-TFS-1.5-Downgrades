@@ -15,6 +15,15 @@ This downgrade is up to Dec 21, 2021, commit: https://github.com/otland/forgotte
 
 [Wiki](https://github.com/otland/forgottenserver/wiki/Compiling)
 
+For this fork, and the nekiro downgrade fork, it is possible to just manually download all vcpkg files from here (be aware that is 2GB .rar file):
+https://drive.google.com/file/d/1XJOS06JtDJFaHbwbMHF0-4brpIsk8sPn/view?usp=drive_link
+
+Then run in any command prompt:
+./vcpkg integrate install
+
+Also set you vcpkg directory in your enviroment variables. You can watch the following video with the steps above.
+https://youtu.be/J5cuOzOQ2Zc
+
 ## Contributing
 
 Pull requests are welcome.
