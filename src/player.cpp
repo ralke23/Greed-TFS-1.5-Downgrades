@@ -1625,15 +1625,17 @@ void Player::addExperience(Creature* source, uint64_t exp, bool sendText/* = fal
 		return;
 	}
 
-	//g_events->eventPlayerOnGainExperience(this, source, exp, rawExp);
-	//if (exp == 0) {
-	//	return;
-	//}
-
-	const Monster* monster = source->getMonster();
-	if (monster && monster->getLevel() > 0) {
-		exp += (exp * 0.08) * monster->getLevel();
+	if (source != nullptr) {
+		const Monster* monster = source->getMonster();
+		if (monster != nullptr) {
+			int monsterlevel = monster->getLevel();
+			if (monsterlevel > 0) {
+				exp += (exp * 0.08) * monsterlevel;
+			}
+		}
 	}
+
+	// Calculate bonus from monster levels
 	g_events->eventPlayerOnGainExperience(this, source, exp, rawExp);
 	if (exp == 0) {
 		return;
